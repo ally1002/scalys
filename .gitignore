@@ -1,0 +1,8 @@
+# Compiled binary
+/scalys
+*.exe
+
+# Test & coverage artifacts
+*.test
+*.out
+coverage.html
