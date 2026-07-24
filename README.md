@@ -65,12 +65,24 @@ through, so you can't count your way to the answer. You have to know the scale.
 - Minor means **natural minor** (`W H W W H W W`); major is `W W H W W W H`.
 - Slot 1 is pre-filled with the root; you fill degrees 2–7.
 
+## Web version
+
+A standalone browser version lives in [`docs/index.html`](docs/index.html) —
+one self-contained file (no build step, no dependencies) with the same rules
+and keyboard-only input, plus a best-streak record and a `?` overlay listing
+all commands.
+
+To share it: send the file directly, open it locally, or enable **GitHub
+Pages** on this repo (Settings → Pages → deploy from branch `master`, folder
+`/docs`) and share the URL.
+
 ## Project layout
 
 ```
 main.go               entry point
 internal/theory/      note set, interval patterns, BuildScale (+ tests)
 internal/ui/          Bubble Tea model, update, view, styles (+ tests)
+docs/index.html       standalone web version (GitHub Pages ready)
 ```
 
 Run the tests with:
