@@ -257,14 +257,6 @@
     margin-bottom: 22px;
   }
 
-  .pattern {
-    color: var(--phos-dim);
-    font-size: clamp(13px, 2.4vw, 15px);
-    letter-spacing: .2em;
-    margin-bottom: 26px;
-  }
-  .pattern span { color: var(--phos); }
-
   /* ── message ────────────────────────────────────────────── */
   .message {
     min-height: 28px;
@@ -278,48 +270,208 @@
 
   /* ── help overlay ───────────────────────────────────────── */
   .overlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
+    z-index: 100;
     display: grid;
     place-items: center;
-    background: rgba(2, 6, 4, .82);
-    backdrop-filter: blur(2px);
-    animation: fadeIn .15s ease-out;
+    padding: 24px;
+    overflow-y: auto;
+    background: rgba(2, 10, 7, .58);
+    backdrop-filter: blur(3px);
+    animation: backdropIn .28s ease-out both;
   }
   .overlay[hidden] { display: none; }
-  @keyframes fadeIn { from { opacity: 0; } }
+  .overlay.closing { animation: backdropOut .2s ease-in both; }
+  @keyframes backdropIn { from { opacity: 0; backdrop-filter: blur(0); } }
+  @keyframes backdropOut { to { opacity: 0; backdrop-filter: blur(0); } }
 
   .overlay-box {
     border: 1px solid var(--phos-dim);
-    border-radius: 10px;
+    border-radius: 12px;
     background: var(--screen);
     box-shadow: var(--glow), inset 0 0 30px rgba(0, 0, 0, .5);
-    padding: clamp(20px, 5vw, 36px) clamp(22px, 6vw, 44px);
-    max-width: 90%;
+    padding: clamp(26px, 5vw, 44px) clamp(28px, 6vw, 56px);
+    max-width: min(94vw, 640px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    animation: boxIn .32s cubic-bezier(.2, 1, .3, 1) both;
   }
+  .overlay.closing .overlay-box { animation: boxOut .2s cubic-bezier(.4, 0, 1, 1) both; }
+  @keyframes boxIn {
+    from { opacity: 0; transform: scale(.9) translateY(14px); filter: blur(4px); }
+    to   { opacity: 1; transform: none; filter: blur(0); }
+  }
+  @keyframes boxOut {
+    from { opacity: 1; transform: none; filter: blur(0); }
+    to   { opacity: 0; transform: scale(.94) translateY(8px); filter: blur(3px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .overlay, .overlay.closing,
+    .overlay-box, .overlay.closing .overlay-box { animation: none; }
+  }
+
   .overlay-box h2 {
     font-family: var(--crt);
-    font-size: clamp(22px, 5vw, 30px);
+    font-size: clamp(25px, 5.4vw, 34px);
     font-weight: 400;
     letter-spacing: .12em;
     text-shadow: var(--glow);
-    margin-bottom: 18px;
+    margin-bottom: 20px;
   }
   .cmd-list {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 10px 22px;
+    gap: 12px 24px;
     align-items: baseline;
-    font-size: clamp(12px, 2.4vw, 14px);
-    margin-bottom: 20px;
+    font-size: clamp(13px, 2.6vw, 15px);
+    margin-bottom: 22px;
   }
   .cmd-list .keys { white-space: nowrap; }
   .cmd-list span { color: var(--phos-dim); }
   .overlay-close {
     color: var(--phos-dim);
-    font-size: 11.5px;
+    font-size: 12.5px;
     text-align: center;
   }
+
+  /* ── theory overlay ─────────────────────────────────────── */
+  .theory-box { width: 100%; text-align: left; }
+
+  .theory-section {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--phos-faint);
+  }
+  .theory-section:last-of-type { border-bottom: none; margin-bottom: 8px; padding-bottom: 0; }
+
+  .theory-section h3 {
+    font-family: var(--crt);
+    font-size: clamp(15px, 3vw, 17px);
+    font-weight: 400;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--phos-dim);
+    margin-bottom: 14px;
+  }
+
+  .formula-row {
+    display: flex;
+    align-items: center;
+    gap: clamp(10px, 3vw, 18px);
+    margin-bottom: 10px;
+  }
+  .formula-label {
+    font-family: var(--notes);
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(15px, 3.4vw, 18px);
+    color: var(--amber);
+    text-shadow: var(--glow-amber);
+    width: 4.4em;
+    flex: none;
+  }
+  .steps {
+    display: flex;
+    gap: clamp(3px, 1vw, 6px);
+    flex: 1;
+  }
+  .step {
+    flex: 1;
+    aspect-ratio: 1 / 1;
+    max-width: 42px;
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: clamp(11px, 2.6vw, 13px);
+    border: 1px solid var(--phos-dim);
+    border-radius: 7px;
+    background: var(--slot-bg);
+    color: var(--phos-dim);
+  }
+  .step.w { color: var(--phos); border-color: var(--phos-dim); text-shadow: var(--glow); }
+  .step.h { color: var(--amber); border-color: var(--amber); text-shadow: var(--glow-amber); background: rgba(255, 200, 87, .08); }
+
+  .formula-legend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--phos-dim);
+    margin-top: 12px;
+  }
+  .step-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    margin-left: 14px;
+  }
+  .step-dot:first-child { margin-left: 0; }
+  .step-dot.w { background: var(--phos); box-shadow: var(--glow); }
+  .step-dot.h { background: var(--amber); box-shadow: var(--glow-amber); }
+
+  .note-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: clamp(4px, 1.2vw, 10px);
+  }
+  .note-pair {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 13px 2px;
+    border: 1px solid var(--phos-faint);
+    border-radius: 9px;
+    background: var(--slot-bg);
+  }
+  .note-pair b {
+    font-family: var(--notes);
+    font-style: italic;
+    font-weight: 700;
+    font-size: clamp(19px, 4.4vw, 25px);
+    color: var(--amber);
+    text-shadow: var(--glow-amber);
+  }
+  .note-pair i {
+    font-family: var(--notes);
+    font-style: italic;
+    font-size: clamp(12px, 2.8vw, 14px);
+    color: var(--phos-dim);
+  }
+
+  .accidental-row {
+    display: flex;
+    align-items: center;
+    gap: clamp(14px, 3.2vw, 20px);
+    margin-bottom: 14px;
+  }
+  .accidental-row:last-child { margin-bottom: 0; }
+  .accidental-sym {
+    flex: none;
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    font-family: var(--notes);
+    font-size: 25px;
+    color: var(--phos);
+    text-shadow: var(--glow);
+    border: 1px solid var(--phos-dim);
+    border-radius: 9px;
+    background: var(--slot-bg);
+  }
+  .accidental-text { display: flex; flex-direction: column; gap: 2px; }
+  .accidental-text b {
+    font-family: var(--crt);
+    font-size: 17px;
+    font-weight: 400;
+    letter-spacing: .04em;
+    color: var(--phos);
+  }
+  .accidental-text span { font-size: 12px; color: var(--phos-dim); }
 
   .help {
     color: var(--phos-dim);
@@ -364,31 +516,80 @@
       <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span>
     </div>
 
-    <div class="pattern" id="pattern"></div>
     <div class="message" id="message"></div>
 
-    <p class="help">press <kbd>?</kbd> for commands</p>
-
-    <div class="overlay" id="helpOverlay" hidden>
-      <div class="overlay-box">
-        <h2>COMMANDS</h2>
-        <div class="cmd-list">
-          <div class="keys"><kbd>a</kbd>–<kbd>g</kbd></div>       <span>write a natural note</span>
-          <div class="keys"><kbd>#</kbd></div>                    <span>sharpen the note (advances)</span>
-          <div class="keys"><kbd>⏎</kbd> / <kbd>→</kbd></div>     <span>next slot</span>
-          <div class="keys"><kbd>←</kbd></div>                    <span>previous slot</span>
-          <div class="keys"><kbd>⌫</kbd></div>                    <span>clear slot / step back</span>
-          <div class="keys"><kbd>s</kbd></div>                    <span>submit answer</span>
-          <div class="keys"><kbd>n</kbd></div>                    <span>new round</span>
-          <div class="keys"><kbd>z</kbd></div>                    <span>toggle zen mode (no flicker/blink)</span>
-          <div class="keys"><kbd>t</kbd></div>                    <span>cycle theme: system → light → dark</span>
-          <div class="keys"><kbd>?</kbd></div>                    <span>toggle this help</span>
-        </div>
-        <p class="overlay-close">press <kbd>?</kbd> or <kbd>esc</kbd> to close</p>
-      </div>
-    </div>
+    <p class="help">press <kbd>?</kbd> for commands · <kbd>h</kbd> for theory</p>
   </div>
   <footer>SCALYS · MAJOR &amp; MINOR SCALE TRAINER · <span class="mode" id="modeStatus"></span></footer>
+</div>
+
+<div class="overlay" id="helpOverlay" hidden>
+  <div class="overlay-box">
+    <h2>COMMANDS</h2>
+    <div class="cmd-list">
+      <div class="keys"><kbd>a</kbd>–<kbd>g</kbd></div>       <span>write a natural note</span>
+      <div class="keys"><kbd>#</kbd></div>                    <span>sharpen the note (advances)</span>
+      <div class="keys"><kbd>⏎</kbd> / <kbd>→</kbd></div>     <span>next slot</span>
+      <div class="keys"><kbd>←</kbd></div>                    <span>previous slot</span>
+      <div class="keys"><kbd>⌫</kbd></div>                    <span>clear slot / step back</span>
+      <div class="keys"><kbd>s</kbd></div>                    <span>submit answer</span>
+      <div class="keys"><kbd>n</kbd></div>                    <span>new round</span>
+      <div class="keys"><kbd>z</kbd></div>                    <span>toggle zen mode (no flicker/blink)</span>
+      <div class="keys"><kbd>t</kbd></div>                    <span>cycle theme: system → light → dark</span>
+      <div class="keys"><kbd>?</kbd></div>                    <span>toggle this help</span>
+      <div class="keys"><kbd>h</kbd></div>                    <span>toggle music theory</span>
+    </div>
+    <p class="overlay-close">press <kbd>?</kbd> or <kbd>esc</kbd> to close</p>
+  </div>
+</div>
+
+<div class="overlay" id="theoryOverlay" hidden>
+  <div class="overlay-box theory-box">
+    <h2>Music Theory</h2>
+
+    <section class="theory-section">
+      <h3>Scale formula</h3>
+      <div class="formula-row">
+        <span class="formula-label">Major</span>
+        <div class="steps">
+          <span class="step w">W</span><span class="step w">W</span><span class="step h">H</span><span class="step w">W</span><span class="step w">W</span><span class="step w">W</span><span class="step h">H</span>
+        </div>
+      </div>
+      <div class="formula-row">
+        <span class="formula-label">Minor</span>
+        <div class="steps">
+          <span class="step w">W</span><span class="step h">H</span><span class="step w">W</span><span class="step w">W</span><span class="step h">H</span><span class="step w">W</span><span class="step w">W</span>
+        </div>
+      </div>
+      <p class="formula-legend"><span class="step-dot w"></span>whole step<span class="step-dot h"></span>half step</p>
+    </section>
+
+    <section class="theory-section">
+      <h3>Note names</h3>
+      <div class="note-grid">
+        <div class="note-pair"><b>C</b><i>Dó</i></div>
+        <div class="note-pair"><b>D</b><i>Ré</i></div>
+        <div class="note-pair"><b>E</b><i>Mi</i></div>
+        <div class="note-pair"><b>F</b><i>Fá</i></div>
+        <div class="note-pair"><b>G</b><i>Sol</i></div>
+        <div class="note-pair"><b>A</b><i>Lá</i></div>
+        <div class="note-pair"><b>B</b><i>Si</i></div>
+      </div>
+    </section>
+
+    <section class="theory-section">
+      <div class="accidental-row">
+        <span class="accidental-sym">♯</span>
+        <div class="accidental-text"><b>Sustenido</b><span>raises a note by a half step</span></div>
+      </div>
+      <div class="accidental-row">
+        <span class="accidental-sym">♭</span>
+        <div class="accidental-text"><b>Bemol</b><span>lowers a note by a half step</span></div>
+      </div>
+    </section>
+
+    <p class="overlay-close">press <kbd>h</kbd> or <kbd>esc</kbd> to close</p>
+  </div>
 </div>
 
 <script>
@@ -579,9 +780,6 @@ function render() {
     slotsEl.appendChild(div);
   });
 
-  const syms = PATTERNS[state.type].slice(0, 6).map(s => s === 2 ? "W" : "H");
-  $("pattern").innerHTML = `Pattern: <span>${syms.join("&nbsp;&nbsp;")}</span>`;
-
   const msg = $("message");
   if (state.submitted) {
     const ok = state.results.every(Boolean);
@@ -596,15 +794,39 @@ function render() {
 }
 
 /* ── input ──────────────────────────────────────────────── */
-function helpOpen() { return !$("helpOverlay").hidden; }
-function toggleHelp() { $("helpOverlay").hidden = !$("helpOverlay").hidden; }
+const CLOSE_MS = 200;
+const closeTimers = {};
+
+function isOpen(id) { return !$(id).hidden && !$(id).classList.contains("closing"); }
+function openOverlay(id) {
+  clearTimeout(closeTimers[id]);
+  const el = $(id);
+  el.classList.remove("closing");
+  el.hidden = false;
+}
+function closeOverlay(id) {
+  const el = $(id);
+  if (el.hidden || el.classList.contains("closing")) return;
+  el.classList.add("closing");
+  closeTimers[id] = setTimeout(() => { el.hidden = true; el.classList.remove("closing"); }, CLOSE_MS);
+}
+
+function helpOpen() { return isOpen("helpOverlay"); }
+function toggleHelp() { helpOpen() ? closeOverlay("helpOverlay") : openOverlay("helpOverlay"); }
+function theoryOpen() { return isOpen("theoryOverlay"); }
+function toggleTheory() { theoryOpen() ? closeOverlay("theoryOverlay") : openOverlay("theoryOverlay"); }
 
 function handleKey(key) {
   if (helpOpen()) {
     if (key === "?" || key === "escape") toggleHelp();
     return;
   }
+  if (theoryOpen()) {
+    if (key === "h" || key === "escape") toggleTheory();
+    return;
+  }
   if (key === "?") { toggleHelp(); return; }
+  if (key === "h") { toggleTheory(); return; }
   if (key === "z") { toggleZen(); return; }
   if (key === "t") { cycleTheme(); return; }
   if (key === "n") { newRound(); return; }
@@ -629,6 +851,10 @@ document.addEventListener("keydown", (e) => {
 
 $("helpOverlay").addEventListener("click", (e) => {
   if (e.target === e.currentTarget) toggleHelp();
+});
+
+$("theoryOverlay").addEventListener("click", (e) => {
+  if (e.target === e.currentTarget) toggleTheory();
 });
 
 renderModeStatus();
