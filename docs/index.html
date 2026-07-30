@@ -20,8 +20,57 @@
     --glow: 0 0 6px rgba(74, 255, 136, .55), 0 0 24px rgba(74, 255, 136, .18);
     --glow-amber: 0 0 6px rgba(255, 200, 87, .55), 0 0 24px rgba(255, 200, 87, .18);
     --glow-red: 0 0 6px rgba(255, 95, 86, .6), 0 0 24px rgba(255, 95, 86, .2);
+    --tint: rgba(74, 255, 136, .05);
+    --outer-glow: rgba(74, 255, 136, .06);
+    --scan: rgba(0, 0, 0, .22);
+    --vignette: rgba(0, 0, 0, .5);
+    --inner-shadow: rgba(0, 0, 0, .55);
+    --slot-bg: rgba(0, 0, 0, .25);
     --mono: "IBM Plex Mono", monospace;
     --crt: "VT323", monospace;
+    color-scheme: dark;
+  }
+
+  /* ── light theme: daylight LCD, not a photo-negative of the CRT ── */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #e7e2d3;
+      --screen: #f5f1e4;
+      --phos: #1c6b3e;
+      --phos-dim: #8a8a72;
+      --phos-faint: #d3cdb8;
+      --amber: #93540a;
+      --red: #a8352a;
+      --glow: 0 1px 0 rgba(0, 0, 0, .1);
+      --glow-amber: 0 1px 0 rgba(0, 0, 0, .08);
+      --glow-red: 0 1px 0 rgba(0, 0, 0, .08);
+      --tint: rgba(28, 107, 62, .04);
+      --outer-glow: rgba(0, 0, 0, .08);
+      --scan: rgba(0, 0, 0, .035);
+      --vignette: rgba(60, 55, 40, .12);
+      --inner-shadow: rgba(60, 55, 40, .14);
+      --slot-bg: rgba(60, 55, 40, .05);
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #e7e2d3;
+    --screen: #f5f1e4;
+    --phos: #1c6b3e;
+    --phos-dim: #8a8a72;
+    --phos-faint: #d3cdb8;
+    --amber: #93540a;
+    --red: #a8352a;
+    --glow: 0 1px 0 rgba(0, 0, 0, .1);
+    --glow-amber: 0 1px 0 rgba(0, 0, 0, .08);
+    --glow-red: 0 1px 0 rgba(0, 0, 0, .08);
+    --tint: rgba(28, 107, 62, .04);
+    --outer-glow: rgba(0, 0, 0, .08);
+    --scan: rgba(0, 0, 0, .035);
+    --vignette: rgba(60, 55, 40, .12);
+    --inner-shadow: rgba(60, 55, 40, .14);
+    --slot-bg: rgba(60, 55, 40, .05);
+    color-scheme: light;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -54,26 +103,27 @@
   .screen {
     position: relative;
     background:
-      radial-gradient(120% 90% at 50% 8%, rgba(74, 255, 136, .05), transparent 60%),
+      radial-gradient(120% 90% at 50% 8%, var(--tint), transparent 60%),
       var(--screen);
     border: 1px solid var(--phos-faint);
     border-radius: 14px;
     padding: clamp(20px, 5vw, 44px) clamp(16px, 5vw, 44px) clamp(18px, 4vw, 36px);
     box-shadow:
-      inset 0 0 80px rgba(0, 0, 0, .55),
-      0 0 0 6px #020403,
-      0 0 60px rgba(74, 255, 136, .06);
+      inset 0 0 80px var(--inner-shadow),
+      0 0 0 6px var(--bg),
+      0 0 60px var(--outer-glow);
     overflow: hidden;
+    transition: background-color .25s, box-shadow .25s;
   }
 
-  /* scanlines + vignette + flicker */
+  /* scanlines + vignette + flicker (killed entirely in zen mode) */
   .screen::before {
     content: "";
     position: absolute; inset: 0;
     background: repeating-linear-gradient(
       to bottom,
       transparent 0 2px,
-      rgba(0, 0, 0, .22) 2px 4px
+      var(--scan) 2px 4px
     );
     pointer-events: none;
     z-index: 3;
@@ -81,7 +131,7 @@
   .screen::after {
     content: "";
     position: absolute; inset: 0;
-    background: radial-gradient(105% 105% at 50% 50%, transparent 62%, rgba(0, 0, 0, .5));
+    background: radial-gradient(105% 105% at 50% 50%, transparent 62%, var(--vignette));
     pointer-events: none;
     z-index: 4;
     animation: flicker 4s infinite steps(60);
@@ -93,6 +143,21 @@
     94% { opacity: 1; }
     97% { opacity: .93; }
     98% { opacity: 1; }
+  }
+
+  body.zen .screen::after { animation: none; }
+  body.zen h1 .cursor-blink,
+  body.zen .slot.focused:empty::after,
+  body.zen .slot.focused .caret {
+    animation: none;
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .crt { animation: none; }
+    .screen::after { animation: none; }
+    h1 .cursor-blink,
+    .slot.focused:empty::after,
+    .slot.focused .caret { animation: none; opacity: 1; }
   }
 
   .screen > * { position: relative; z-index: 2; }
@@ -161,7 +226,7 @@
     cursor: pointer;
     user-select: none;
     transition: border-color .12s, box-shadow .12s, transform .12s;
-    background: rgba(0, 0, 0, .25);
+    background: var(--slot-bg);
   }
   .slot.root {
     border-color: var(--amber);
@@ -299,6 +364,10 @@
     font-size: 11px;
     letter-spacing: .1em;
   }
+  footer .mode {
+    color: var(--phos-dim);
+    cursor: default;
+  }
 </style>
 </head>
 <body>
@@ -335,17 +404,61 @@
           <div class="keys"><kbd>⌫</kbd></div>                    <span>clear slot / step back</span>
           <div class="keys"><kbd>s</kbd></div>                    <span>submit answer</span>
           <div class="keys"><kbd>n</kbd></div>                    <span>new round</span>
+          <div class="keys"><kbd>z</kbd></div>                    <span>toggle zen mode (no flicker/blink)</span>
+          <div class="keys"><kbd>t</kbd></div>                    <span>cycle theme: system → light → dark</span>
           <div class="keys"><kbd>?</kbd></div>                    <span>toggle this help</span>
         </div>
         <p class="overlay-close">press <kbd>?</kbd> or <kbd>esc</kbd> to close</p>
       </div>
     </div>
   </div>
-  <footer>SCALYS · MAJOR &amp; MINOR SCALE TRAINER</footer>
+  <footer>SCALYS · MAJOR &amp; MINOR SCALE TRAINER · <span class="mode" id="modeStatus"></span></footer>
 </div>
 
 <script>
 "use strict";
+
+/* ── theme + zen mode ───────────────────────────────────── */
+const THEME_KEY = "scalys.theme";   // "system" | "light" | "dark"
+const ZEN_KEY = "scalys.zen";       // "1" | "0"
+
+const uiState = {
+  theme: localStorage.getItem(THEME_KEY) || "system",
+  zen: localStorage.getItem(ZEN_KEY) === "1",
+};
+
+function applyTheme() {
+  if (uiState.theme === "system") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", uiState.theme);
+}
+
+function applyZen() {
+  document.body.classList.toggle("zen", uiState.zen);
+}
+
+function renderModeStatus() {
+  const el = $("modeStatus");
+  if (!el) return;
+  const themeLabel = uiState.theme === "system" ? "SYSTEM" : uiState.theme.toUpperCase();
+  el.textContent = `THEME: ${themeLabel}${uiState.zen ? " · ZEN" : ""}`;
+}
+
+function cycleTheme() {
+  uiState.theme = { system: "light", light: "dark", dark: "system" }[uiState.theme];
+  localStorage.setItem(THEME_KEY, uiState.theme);
+  applyTheme();
+  renderModeStatus();
+}
+
+function toggleZen() {
+  uiState.zen = !uiState.zen;
+  localStorage.setItem(ZEN_KEY, uiState.zen ? "1" : "0");
+  applyZen();
+  renderModeStatus();
+}
+
+applyTheme();
+applyZen();
 
 /* ── theory ─────────────────────────────────────────────── */
 const NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
@@ -516,6 +629,8 @@ function handleKey(key) {
     return;
   }
   if (key === "?") { toggleHelp(); return; }
+  if (key === "z") { toggleZen(); return; }
+  if (key === "t") { cycleTheme(); return; }
   if (key === "n") { newRound(); return; }
   if (state.submitted) {
     if (key === "enter") newRound();
@@ -540,6 +655,7 @@ $("helpOverlay").addEventListener("click", (e) => {
   if (e.target === e.currentTarget) toggleHelp();
 });
 
+renderModeStatus();
 newRound();
 </script>
 </body>
