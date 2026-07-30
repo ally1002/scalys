@@ -7,7 +7,7 @@
 <meta name="description" content="A terminal-style game for practicing major and minor scales.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500&family=Cormorant+Garamond:ital,wght@1,400;1,600;1,700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #04080a;
@@ -28,6 +28,8 @@
     --slot-bg: rgba(0, 0, 0, .25);
     --mono: "IBM Plex Mono", monospace;
     --crt: "VT323", monospace;
+    --script: "Cormorant Garamond", serif;
+    --notes: "Cormorant Garamond", serif;
     color-scheme: dark;
   }
 
@@ -91,61 +93,25 @@
     position: relative;
     width: min(760px, 100vw);
     padding: clamp(16px, 4vw, 48px);
-    animation: powerOn .5s cubic-bezier(.23, 1, .32, 1) both;
+    animation: riseIn .45s cubic-bezier(.23, 1, .32, 1) both;
   }
 
-  @keyframes powerOn {
-    0%   { transform: scaleY(.004) scaleX(.6); filter: brightness(8); }
-    60%  { transform: scaleY(1) scaleX(1); filter: brightness(2.2); }
-    100% { transform: none; filter: none; }
+  @keyframes riseIn {
+    0%   { transform: translateY(10px); opacity: 0; }
+    100% { transform: none; opacity: 1; }
   }
 
   .screen {
     position: relative;
-    background:
-      radial-gradient(120% 90% at 50% 8%, var(--tint), transparent 60%),
-      var(--screen);
+    background: var(--screen);
     border: 1px solid var(--phos-faint);
     border-radius: 14px;
     padding: clamp(20px, 5vw, 44px) clamp(16px, 5vw, 44px) clamp(18px, 4vw, 36px);
-    box-shadow:
-      inset 0 0 80px var(--inner-shadow),
-      0 0 0 6px var(--bg),
-      0 0 60px var(--outer-glow);
+    box-shadow: 0 20px 60px var(--outer-glow);
     overflow: hidden;
     transition: background-color .25s, box-shadow .25s;
   }
 
-  /* scanlines + vignette + flicker (killed entirely in zen mode) */
-  .screen::before {
-    content: "";
-    position: absolute; inset: 0;
-    background: repeating-linear-gradient(
-      to bottom,
-      transparent 0 2px,
-      var(--scan) 2px 4px
-    );
-    pointer-events: none;
-    z-index: 3;
-  }
-  .screen::after {
-    content: "";
-    position: absolute; inset: 0;
-    background: radial-gradient(105% 105% at 50% 50%, transparent 62%, var(--vignette));
-    pointer-events: none;
-    z-index: 4;
-    animation: flicker 4s infinite steps(60);
-  }
-  @keyframes flicker {
-    0%, 100% { opacity: 1; }
-    92% { opacity: 1; }
-    93% { opacity: .86; }
-    94% { opacity: 1; }
-    97% { opacity: .93; }
-    98% { opacity: 1; }
-  }
-
-  body.zen .screen::after { animation: none; }
   body.zen h1 .cursor-blink,
   body.zen .slot.focused:empty::after,
   body.zen .slot.focused .caret {
@@ -154,7 +120,6 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .crt { animation: none; }
-    .screen::after { animation: none; }
     h1 .cursor-blink,
     .slot.focused:empty::after,
     .slot.focused .caret { animation: none; opacity: 1; }
@@ -172,15 +137,22 @@
   }
 
   h1 {
-    font-family: var(--crt);
-    font-size: clamp(30px, 6vw, 44px);
-    letter-spacing: .06em;
-    text-shadow: var(--glow);
+    font-family: var(--script);
+    font-style: italic;
     font-weight: 400;
+    font-size: clamp(38px, 8vw, 56px);
+    letter-spacing: .01em;
+    text-shadow: var(--glow);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
   h1 .cursor-blink {
     display: inline-block;
-    width: .5em;
+    width: 2px;
+    height: .7em;
+    margin-left: 4px;
+    background: currentColor;
+    vertical-align: -.05em;
     animation: blink 1.1s steps(1) infinite;
   }
   @keyframes blink { 50% { opacity: 0; } }
@@ -196,12 +168,13 @@
     font-size: clamp(14px, 2.6vw, 16px);
   }
   .challenge b {
-    font-family: var(--crt);
+    font-family: var(--notes);
+    font-style: italic;
     font-size: clamp(24px, 5vw, 32px);
     color: var(--amber);
     text-shadow: var(--glow-amber);
-    font-weight: 400;
-    letter-spacing: .04em;
+    font-weight: 700;
+    letter-spacing: .01em;
     margin-left: 8px;
   }
   .streak { color: var(--phos-dim); }
@@ -221,8 +194,12 @@
     border-radius: 8px;
     display: grid;
     place-items: center;
-    font-family: var(--crt);
-    font-size: clamp(20px, 5.4vw, 38px);
+    font-family: var(--notes);
+    font-style: italic;
+    font-weight: 700;
+    font-size: clamp(22px, 6vw, 42px);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
     cursor: pointer;
     user-select: none;
     transition: border-color .12s, box-shadow .12s, transform .12s;
@@ -360,12 +337,11 @@
   footer {
     margin-top: 18px;
     text-align: center;
-    color: var(--phos-faint);
+    color: var(--phos-dim);
     font-size: 11px;
     letter-spacing: .1em;
   }
   footer .mode {
-    color: var(--phos-dim);
     cursor: default;
   }
 </style>
@@ -375,7 +351,7 @@
 <div class="crt">
   <div class="screen">
     <header>
-      <h1>SCALYS<span class="cursor-blink">▊</span></h1>
+      <h1>Scalys<span class="cursor-blink"></span></h1>
     </header>
 
     <div class="challenge-row">
@@ -440,7 +416,7 @@ function renderModeStatus() {
   const el = $("modeStatus");
   if (!el) return;
   const themeLabel = uiState.theme === "system" ? "SYSTEM" : uiState.theme.toUpperCase();
-  el.textContent = `THEME: ${themeLabel}${uiState.zen ? " · ZEN" : ""}`;
+  el.textContent = `[T]HEME: ${themeLabel}${uiState.zen ? " · ZEN" : ""}`;
 }
 
 function cycleTheme() {
