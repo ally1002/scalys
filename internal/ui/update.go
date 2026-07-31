@@ -18,6 +18,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case "n":
 		m.newRound()
 		return m, nil
+	case "m":
+		m.toggleMode()
+		return m, nil
 	}
 
 	if m.state == stateSubmitted {
@@ -33,7 +36,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.cursor--
 		}
 	case "right", "enter":
-		if m.cursor < 6 {
+		if m.cursor < len(m.slots)-1 {
 			m.cursor++
 		}
 	case "a", "b", "c", "d", "e", "f", "g":
@@ -68,7 +71,7 @@ func (m *model) toggleSharp() {
 		m.slots[m.cursor] = strings.TrimSuffix(note, "#")
 	case note != "E" && note != "B":
 		m.slots[m.cursor] = note + "#"
-		if m.cursor < 6 {
+		if m.cursor < len(m.slots)-1 {
 			m.cursor++
 		}
 	}

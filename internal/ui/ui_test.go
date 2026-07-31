@@ -180,6 +180,47 @@ func TestFullRoundViaKeys(t *testing.T) {
 	}
 }
 
+func TestToggleModeSwitchesToTriad(t *testing.T) {
+	m := press(New(), "m")
+	if m.mode != theory.TriadMode {
+		t.Fatal("expected triad mode after pressing m")
+	}
+	if len(m.answer) != 3 || len(m.slots) != 3 || len(m.results) != 3 {
+		t.Errorf("triad round should have 3 notes, got answer=%d slots=%d results=%d", len(m.answer), len(m.slots), len(m.results))
+	}
+	if m.slots[0] != m.answer[0] {
+		t.Errorf("slot 0 = %q, want root %q", m.slots[0], m.answer[0])
+	}
+
+	m = press(m, "m")
+	if m.mode != theory.ScaleMode {
+		t.Fatal("expected scale mode after toggling back")
+	}
+	if len(m.answer) != 7 {
+		t.Errorf("scale round should have 7 notes, got %d", len(m.answer))
+	}
+}
+
+func TestFullTriadRoundViaKeys(t *testing.T) {
+	m := press(New(), "m")
+	for _, note := range m.answer[1:] {
+		keys := []string{strings.ToLower(note[:1])}
+		if strings.HasSuffix(note, "#") {
+			keys = append(keys, "#")
+		} else {
+			keys = append(keys, "enter")
+		}
+		m = press(m, keys...)
+	}
+	m = press(m, "s")
+	if m.state != stateSubmitted {
+		t.Fatal("expected submitted state after s")
+	}
+	if m.streak != 1 {
+		t.Errorf("streak = %d, want 1 (typed the correct triad)", m.streak)
+	}
+}
+
 func TestViewRenders(t *testing.T) {
 	m := New()
 	out := m.View()

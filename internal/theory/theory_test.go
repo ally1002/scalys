@@ -51,6 +51,28 @@ func TestBuildScaleMinor(t *testing.T) {
 	}
 }
 
+func TestBuildTriad(t *testing.T) {
+	want := map[int][]string{
+		0: {"C", "E", "G"},
+		9: {"A", "C#", "E"},
+	}
+	for root, expected := range want {
+		got := Build(root, Major, TriadMode)
+		if !reflect.DeepEqual(got, expected) {
+			t.Errorf("%s major triad: got %v, want %v", Notes[root], got, expected)
+		}
+	}
+	if got := Build(9, Minor, TriadMode); !reflect.DeepEqual(got, []string{"A", "C", "E"}) {
+		t.Errorf("A minor triad: got %v", got)
+	}
+}
+
+func TestBuildScaleModeMatchesBuildScale(t *testing.T) {
+	if got := Build(3, Minor, ScaleMode); !reflect.DeepEqual(got, BuildScale(3, Minor)) {
+		t.Errorf("ScaleMode Build diverged from BuildScale: got %v", got)
+	}
+}
+
 func TestPatternSymbols(t *testing.T) {
 	if got := Major.PatternSymbols(); !reflect.DeepEqual(got, []string{"W", "W", "H", "W", "W", "W", "H"}) {
 		t.Errorf("major symbols: got %v", got)

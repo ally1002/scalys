@@ -50,3 +50,29 @@ func BuildScale(root int, scaleType ScaleType) []string {
 	}
 	return scale
 }
+
+// PracticeMode selects what a round asks the player to build.
+type PracticeMode int
+
+const (
+	ScaleMode PracticeMode = iota
+	TriadMode
+)
+
+func (p PracticeMode) String() string {
+	if p == TriadMode {
+		return "TRIAD"
+	}
+	return "SCALE"
+}
+
+// Build returns the notes for a round in the given mode: the full 7-note
+// scale, or for TriadMode just the root, third, and fifth (scale degrees
+// 1, 3, 5).
+func Build(root int, scaleType ScaleType, mode PracticeMode) []string {
+	scale := BuildScale(root, scaleType)
+	if mode == TriadMode {
+		return []string{scale[0], scale[2], scale[4]}
+	}
+	return scale
+}

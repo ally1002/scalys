@@ -512,7 +512,7 @@
     </div>
 
     <div class="slots" id="slots"></div>
-    <div class="degrees">
+    <div class="degrees" id="degrees">
       <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span>
     </div>
 
@@ -534,6 +534,7 @@
       <div class="keys"><kbd>⌫</kbd></div>                    <span>clear slot / step back</span>
       <div class="keys"><kbd>s</kbd></div>                    <span>submit answer</span>
       <div class="keys"><kbd>n</kbd></div>                    <span>new round</span>
+      <div class="keys"><kbd>m</kbd></div>                    <span>toggle scale / triad mode</span>
       <div class="keys"><kbd>z</kbd></div>                    <span>toggle zen mode (no flicker/blink)</span>
       <div class="keys"><kbd>t</kbd></div>                    <span>cycle theme: system → light → dark</span>
       <div class="keys"><kbd>?</kbd></div>                    <span>toggle this help</span>
@@ -617,7 +618,7 @@ function renderModeStatus() {
   const el = $("modeStatus");
   if (!el) return;
   const themeLabel = uiState.theme === "system" ? "SYSTEM" : uiState.theme.toUpperCase();
-  el.textContent = `[T]HEME: ${themeLabel}${uiState.zen ? " · ZEN" : ""}`;
+  el.textContent = `[M]ODE: ${state.mode} · [T]HEME: ${themeLabel}${uiState.zen ? " · ZEN" : ""}`;
 }
 
 function cycleTheme() {
@@ -654,10 +655,18 @@ function buildScale(root, type) {
   return scale;
 }
 
+function buildAnswer(root, type, mode) {
+  const scale = buildScale(root, type);
+  return mode === "TRIAD" ? [scale[0], scale[2], scale[4]] : scale;
+}
+
 /* ── state ──────────────────────────────────────────────── */
+const MODE_KEY = "scalys.mode";        // "SCALE" | "TRIAD"
+
 const state = {
   root: -1,
   type: "MAJOR",
+  mode: localStorage.getItem(MODE_KEY) === "TRIAD" ? "TRIAD" : "SCALE",
   answer: [],
   slots: Array(7).fill(""),
   cursor: 1,
@@ -673,13 +682,20 @@ function newRound() {
     state.root = Math.floor(Math.random() * 12);
     state.type = Math.random() < 0.5 ? "MAJOR" : "MINOR";
   } while (`${state.root}${state.type}` === prev);
-  state.answer = buildScale(state.root, state.type);
-  state.slots = Array(7).fill("");
+  state.answer = buildAnswer(state.root, state.type, state.mode);
+  state.slots = Array(state.answer.length).fill("");
   state.slots[0] = state.answer[0];
   state.cursor = 1;
   state.submitted = false;
-  state.results = Array(7).fill(false);
+  state.results = Array(state.answer.length).fill(false);
   render();
+}
+
+function toggleMode() {
+  state.mode = state.mode === "TRIAD" ? "SCALE" : "TRIAD";
+  localStorage.setItem(MODE_KEY, state.mode);
+  renderModeStatus();
+  newRound();
 }
 
 /* ── actions ────────────────────────────────────────────── */
@@ -700,15 +716,16 @@ function sharpen() {
     return;
   } else {
     state.slots[state.cursor] = note + "#";
-    if (state.cursor < 6) state.cursor++;
+    if (state.cursor < state.slots.length - 1) state.cursor++;
   }
   render();
 }
 
 function advance() {
   if (state.submitted) { newRound(); return; }
-  if (state.cursor === 6 && filled()) { submit(); return; }
-  if (state.cursor < 6) state.cursor++;
+  const last = state.slots.length - 1;
+  if (state.cursor === last && filled()) { submit(); return; }
+  if (state.cursor < last) state.cursor++;
   render();
 }
 
@@ -758,12 +775,19 @@ function rejectFeedback() {
 const $ = (id) => document.getElementById(id);
 
 function render() {
-  $("challenge").textContent = `${state.answer[0]} ${state.type}`;
+  $("challenge").textContent = `${state.answer[0]} ${state.type}${state.mode === "TRIAD" ? " TRIAD" : ""}`;
   $("streak").textContent = state.streak;
   $("best").textContent = state.best;
 
   const slotsEl = $("slots");
+  slotsEl.style.gridTemplateColumns = `repeat(${state.slots.length}, 1fr)`;
   slotsEl.innerHTML = "";
+
+  const degreeNums = state.mode === "TRIAD" ? [1, 3, 5] : [1, 2, 3, 4, 5, 6, 7];
+  const degreesEl = $("degrees");
+  degreesEl.style.gridTemplateColumns = `repeat(${state.slots.length}, 1fr)`;
+  degreesEl.innerHTML = degreeNums.map((n) => `<span>${n}</span>`).join("");
+
   state.slots.forEach((note, i) => {
     const div = document.createElement("div");
     div.className = "slot";
@@ -784,8 +808,9 @@ function render() {
   if (state.submitted) {
     const ok = state.results.every(Boolean);
     const right = state.results.filter(Boolean).length - 1;
+    const total = state.results.length - 1;
     msg.className = `message ${ok ? "ok" : "bad"}`;
-    msg.textContent = ok ? "✓ CORRECT! WELL DONE." : `✗ ${right} OF 6 RIGHT — RED SHOWS YOURS→EXPECTED`;
+    msg.textContent = ok ? "✓ CORRECT! WELL DONE." : `✗ ${right} OF ${total} RIGHT — RED SHOWS YOURS→EXPECTED`;
   } else {
     msg.className = "message";
     msg.textContent = "";
@@ -830,6 +855,7 @@ function handleKey(key) {
   if (key === "z") { toggleZen(); return; }
   if (key === "t") { cycleTheme(); return; }
   if (key === "n") { newRound(); return; }
+  if (key === "m") { toggleMode(); return; }
   if (state.submitted) {
     if (key === "enter") newRound();
     return;
