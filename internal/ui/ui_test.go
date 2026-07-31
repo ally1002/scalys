@@ -180,10 +180,21 @@ func TestFullRoundViaKeys(t *testing.T) {
 	}
 }
 
-func TestToggleModeSwitchesToTriad(t *testing.T) {
+func TestModeModalSwitchesToTriad(t *testing.T) {
 	m := press(New(), "m")
+	if !m.modal {
+		t.Fatal("expected modal to open after pressing m")
+	}
+	if m.mode != theory.ScaleMode {
+		t.Fatal("mode should not change until a shortcut is pressed")
+	}
+
+	m = press(m, "t")
+	if m.modal {
+		t.Fatal("expected modal to close immediately after selecting a mode")
+	}
 	if m.mode != theory.TriadMode {
-		t.Fatal("expected triad mode after pressing m")
+		t.Fatal("expected triad mode after pressing t")
 	}
 	if len(m.answer) != 3 || len(m.slots) != 3 || len(m.results) != 3 {
 		t.Errorf("triad round should have 3 notes, got answer=%d slots=%d results=%d", len(m.answer), len(m.slots), len(m.results))
@@ -192,17 +203,118 @@ func TestToggleModeSwitchesToTriad(t *testing.T) {
 		t.Errorf("slot 0 = %q, want root %q", m.slots[0], m.answer[0])
 	}
 
-	m = press(m, "m")
+	m = press(m, "m", "s")
 	if m.mode != theory.ScaleMode {
-		t.Fatal("expected scale mode after toggling back")
+		t.Fatal("expected scale mode after switching back")
 	}
 	if len(m.answer) != 7 {
 		t.Errorf("scale round should have 7 notes, got %d", len(m.answer))
 	}
 }
 
-func TestFullTriadRoundViaKeys(t *testing.T) {
+func TestModeModalArrowKeysOnlyHighlightUntilEnter(t *testing.T) {
+	m := press(New(), "m", "down")
+	if !m.modal {
+		t.Fatal("expected modal to stay open after pressing down (highlight only)")
+	}
+	if m.mode != theory.ScaleMode {
+		t.Fatal("mode should not change from down alone")
+	}
+	if m.modalRow != theory.TriadMode {
+		t.Fatalf("modalRow = %v, want Triad after pressing down once from Scale", m.modalRow)
+	}
+
+	m = press(m, "down")
+	if m.modalRow != theory.PentatonicMode {
+		t.Fatalf("modalRow = %v, want Pentatonic after pressing down again", m.modalRow)
+	}
+
+	m = press(m, "down")
+	if m.modalRow != theory.ScaleMode {
+		t.Fatalf("modalRow = %v, want Scale after wrapping around", m.modalRow)
+	}
+
+	m = press(m, "up")
+	if m.modalRow != theory.PentatonicMode {
+		t.Fatalf("modalRow = %v, want Pentatonic after pressing up (wraps backward)", m.modalRow)
+	}
+
+	m = press(m, "enter")
+	if m.modal {
+		t.Fatal("expected modal to close after enter")
+	}
+	if m.mode != theory.PentatonicMode {
+		t.Fatalf("mode = %v, want Pentatonic after confirming the highlighted row with enter", m.mode)
+	}
+}
+
+func TestModeModalEscClosesWithoutSwitching(t *testing.T) {
+	m := press(New(), "m", "esc")
+	if m.modal {
+		t.Fatal("expected modal to close after esc")
+	}
+	if m.mode != theory.ScaleMode {
+		t.Fatal("esc should not change mode")
+	}
+}
+
+func TestModeModalQualityCyclesWithoutClosing(t *testing.T) {
 	m := press(New(), "m")
+	if m.quality != qualityRandom {
+		t.Fatal("expected default quality to be random")
+	}
+	m = press(m, "right")
+	if !m.modal {
+		t.Fatal("expected modal to stay open after changing quality")
+	}
+	if m.quality != qualityMajor {
+		t.Fatalf("quality = %v, want Major", m.quality)
+	}
+	m = press(m, "left")
+	if m.quality != qualityRandom {
+		t.Fatalf("quality = %v, want Random after cycling back", m.quality)
+	}
+	if !m.modal {
+		t.Fatal("expected modal to still be open")
+	}
+}
+
+func TestQualityChangeAppliesOnNextModeSelect(t *testing.T) {
+	m := press(New(), "m", "right", "s")
+	if m.modal {
+		t.Fatal("expected modal to close after selecting a mode")
+	}
+	if m.quality != qualityMajor {
+		t.Fatalf("quality = %v, want Major", m.quality)
+	}
+	if m.scaleType != theory.Major {
+		t.Fatalf("scaleType = %v, want Major after applying the quality via mode select", m.scaleType)
+	}
+}
+
+func TestFixedQualityAlwaysDealsThatType(t *testing.T) {
+	m := New()
+	m.quality = qualityMajor
+	for i := 0; i < 20; i++ {
+		m.newRound()
+		if m.scaleType != theory.Major {
+			t.Fatalf("scaleType = %v, want Major with fixed quality", m.scaleType)
+		}
+	}
+}
+
+func TestPentatonicMode(t *testing.T) {
+	m := press(New(), "m", "p")
+	if m.mode != theory.PentatonicMode {
+		t.Fatal("expected pentatonic mode after pressing p")
+	}
+	if len(m.answer) != 5 || len(m.slots) != 5 || len(m.results) != 5 {
+		t.Errorf("pentatonic round should have 5 notes, got answer=%d slots=%d results=%d", len(m.answer), len(m.slots), len(m.results))
+	}
+}
+
+func TestFullTriadRoundViaKeys(t *testing.T) {
+	m := press(New(), "m", "t")
 	for _, note := range m.answer[1:] {
 		keys := []string{strings.ToLower(note[:1])}
 		if strings.HasSuffix(note, "#") {

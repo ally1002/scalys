@@ -335,6 +335,44 @@
     text-align: center;
   }
 
+  /* ── mode overlay ───────────────────────────────────────── */
+  .mode-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 22px;
+    font-size: clamp(13px, 2.6vw, 15px);
+  }
+  .mode-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid var(--phos-faint);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--phos-dim);
+  }
+  .mode-row .mode-label { color: var(--phos-dim); }
+  .mode-row.current .mode-label { color: var(--amber); }
+  .mode-row.highlight {
+    border-color: var(--phos);
+    box-shadow: var(--glow);
+  }
+  .mode-row.highlight .mode-label { color: var(--phos); text-shadow: var(--glow); }
+  .mode-qualities {
+    display: flex;
+    justify-content: center;
+    gap: clamp(10px, 3vw, 20px);
+    margin-top: 4px;
+    font-size: clamp(14px, 3vw, 17px);
+  }
+  .mode-qualities span { color: var(--phos-dim); cursor: pointer; }
+  .mode-qualities span.selected {
+    color: var(--amber);
+    text-shadow: var(--glow-amber);
+    font-weight: 700;
+  }
+
   /* ── theory overlay ─────────────────────────────────────── */
   .theory-box { width: 100%; text-align: left; }
 
@@ -534,7 +572,7 @@
       <div class="keys"><kbd>⌫</kbd></div>                    <span>clear slot / step back</span>
       <div class="keys"><kbd>s</kbd></div>                    <span>submit answer</span>
       <div class="keys"><kbd>n</kbd></div>                    <span>new round</span>
-      <div class="keys"><kbd>m</kbd></div>                    <span>toggle scale / triad mode</span>
+      <div class="keys"><kbd>m</kbd></div>                    <span>mode settings (scale / triad / pentatonic)</span>
       <div class="keys"><kbd>z</kbd></div>                    <span>toggle zen mode (no flicker/blink)</span>
       <div class="keys"><kbd>t</kbd></div>                    <span>cycle theme: system → light → dark</span>
       <div class="keys"><kbd>?</kbd></div>                    <span>toggle this help</span>
@@ -593,6 +631,14 @@
   </div>
 </div>
 
+<div class="overlay" id="modeOverlay" hidden>
+  <div class="overlay-box">
+    <h2>MODE SETTINGS</h2>
+    <div class="mode-list" id="modeList"></div>
+    <p class="overlay-close"><kbd>s</kbd>/<kbd>t</kbd>/<kbd>p</kbd> select mode · <kbd>↑</kbd>/<kbd>↓</kbd> highlight · <kbd>⏎</kbd> apply · <kbd>←</kbd>/<kbd>→</kbd> change quality · <kbd>esc</kbd> close</p>
+  </div>
+</div>
+
 <script>
 "use strict";
 
@@ -614,11 +660,39 @@ function applyZen() {
   document.body.classList.toggle("zen", uiState.zen);
 }
 
+const MODE_KEYS = { SCALE: "S", TRIAD: "T", PENTATONIC: "P" };
+const MODE_LABELS = { SCALE: "Scale", TRIAD: "Triad", PENTATONIC: "Pentatonic" };
+
 function renderModeStatus() {
   const el = $("modeStatus");
   if (!el) return;
   const themeLabel = uiState.theme === "system" ? "SYSTEM" : uiState.theme.toUpperCase();
-  el.textContent = `[M]ODE: ${state.mode} · [T]HEME: ${themeLabel}${uiState.zen ? " · ZEN" : ""}`;
+  el.textContent = `[M]ODE: ${state.mode} (${state.quality}) · [T]HEME: ${themeLabel}${uiState.zen ? " · ZEN" : ""}`;
+}
+
+function renderModeList() {
+  const el = $("modeList");
+  if (!el) return;
+  const modeRows = MODES.map((mode) => {
+    const cls = ["mode-row"];
+    if (mode === state.modalRow) cls.push("highlight");
+    if (mode === state.mode) cls.push("current");
+    const check = mode === state.mode ? " ✓" : "";
+    return `<div class="${cls.join(" ")}" data-mode="${mode}">
+      <span class="mode-label">[${MODE_KEYS[mode]}] ${MODE_LABELS[mode]}${check}</span>
+    </div>`;
+  }).join("");
+  const qualityRow = `<div class="mode-qualities">${QUALITIES.map((q) => {
+    const cls = q === state.quality ? "selected" : "";
+    return `<span class="${cls}" data-quality="${q}">${q[0]}${q.slice(1).toLowerCase()}</span>`;
+  }).join("")}</div>`;
+  el.innerHTML = modeRows + qualityRow;
+  el.querySelectorAll(".mode-row").forEach((row) => {
+    row.addEventListener("click", () => selectMode(row.dataset.mode));
+  });
+  el.querySelectorAll(".mode-qualities span").forEach((span) => {
+    span.addEventListener("click", () => setQuality(span.dataset.quality));
+  });
 }
 
 function cycleTheme() {
@@ -655,18 +729,39 @@ function buildScale(root, type) {
   return scale;
 }
 
+// degreeIndices returns the 0-based scale-degree indices a practice mode
+// asks for, or null for SCALE (the full 7-note scale). Pentatonic degrees
+// depend on type: major pentatonic omits 4 and 7 (degrees 1,2,3,5,6),
+// minor pentatonic omits 2 and 6 (degrees 1,3,4,5,7).
+function degreeIndices(mode, type) {
+  if (mode === "TRIAD") return [0, 2, 4];
+  if (mode === "PENTATONIC") return type === "MAJOR" ? [0, 1, 2, 4, 5] : [0, 2, 3, 4, 6];
+  return null;
+}
+
+function degreeNumbers(mode, type) {
+  const idx = degreeIndices(mode, type);
+  return idx ? idx.map((i) => i + 1) : [1, 2, 3, 4, 5, 6, 7];
+}
+
 function buildAnswer(root, type, mode) {
   const scale = buildScale(root, type);
-  return mode === "TRIAD" ? [scale[0], scale[2], scale[4]] : scale;
+  const idx = degreeIndices(mode, type);
+  return idx ? idx.map((i) => scale[i]) : scale;
 }
 
 /* ── state ──────────────────────────────────────────────── */
-const MODE_KEY = "scalys.mode";        // "SCALE" | "TRIAD"
+const MODE_KEY = "scalys.mode";        // "SCALE" | "TRIAD" | "PENTATONIC"
+const QUALITY_KEY = "scalys.quality";  // "RANDOM" | "MAJOR" | "MINOR"
+const MODES = ["SCALE", "TRIAD", "PENTATONIC"];
+const QUALITIES = ["RANDOM", "MAJOR", "MINOR"];
 
 const state = {
   root: -1,
   type: "MAJOR",
-  mode: localStorage.getItem(MODE_KEY) === "TRIAD" ? "TRIAD" : "SCALE",
+  mode: MODES.includes(localStorage.getItem(MODE_KEY)) ? localStorage.getItem(MODE_KEY) : "SCALE",
+  modalRow: "SCALE",
+  quality: QUALITIES.includes(localStorage.getItem(QUALITY_KEY)) ? localStorage.getItem(QUALITY_KEY) : "RANDOM",
   answer: [],
   slots: Array(7).fill(""),
   cursor: 1,
@@ -675,12 +770,13 @@ const state = {
   streak: 0,
   best: Number(localStorage.getItem("scalys.best") || 0),
 };
+state.modalRow = state.mode;
 
 function newRound() {
   const prev = `${state.root}${state.type}`;
   do {
     state.root = Math.floor(Math.random() * 12);
-    state.type = Math.random() < 0.5 ? "MAJOR" : "MINOR";
+    state.type = state.quality === "RANDOM" ? (Math.random() < 0.5 ? "MAJOR" : "MINOR") : state.quality;
   } while (`${state.root}${state.type}` === prev);
   state.answer = buildAnswer(state.root, state.type, state.mode);
   state.slots = Array(state.answer.length).fill("");
@@ -691,11 +787,47 @@ function newRound() {
   render();
 }
 
-function toggleMode() {
-  state.mode = state.mode === "TRIAD" ? "SCALE" : "TRIAD";
+function openModeModal() {
+  state.modalRow = state.mode;
+  renderModeList();
+  openOverlay("modeOverlay");
+}
+
+// selectMode switches practice mode, closes the modal, and deals a new
+// round — pressing s/t/p is a single, self-contained action.
+function selectMode(mode) {
+  state.mode = mode;
+  state.modalRow = mode;
   localStorage.setItem(MODE_KEY, state.mode);
+  closeOverlay("modeOverlay");
   renderModeStatus();
   newRound();
+}
+
+// moveModalRow just shifts which mode is highlighted — used by up/down,
+// which only browse. enter confirms the highlighted row via applyModalRow.
+function moveModalRow(dir) {
+  const i = MODES.indexOf(state.modalRow);
+  state.modalRow = MODES[(i + dir + MODES.length) % MODES.length];
+  renderModeList();
+}
+
+function applyModalRow() {
+  selectMode(state.modalRow);
+}
+
+// setQuality just changes the quality setting for future rounds — it does
+// not close the modal or deal a new round. Only selectMode (s/t/p) does.
+function setQuality(quality) {
+  state.quality = quality;
+  localStorage.setItem(QUALITY_KEY, state.quality);
+  renderModeStatus();
+  renderModeList();
+}
+
+function cycleQuality(dir) {
+  const i = QUALITIES.indexOf(state.quality);
+  setQuality(QUALITIES[(i + dir + QUALITIES.length) % QUALITIES.length]);
 }
 
 /* ── actions ────────────────────────────────────────────── */
@@ -775,7 +907,7 @@ function rejectFeedback() {
 const $ = (id) => document.getElementById(id);
 
 function render() {
-  $("challenge").textContent = `${state.answer[0]} ${state.type}${state.mode === "TRIAD" ? " TRIAD" : ""}`;
+  $("challenge").textContent = `${state.answer[0]} ${state.type}${state.mode !== "SCALE" ? " " + state.mode : ""}`;
   $("streak").textContent = state.streak;
   $("best").textContent = state.best;
 
@@ -783,7 +915,7 @@ function render() {
   slotsEl.style.gridTemplateColumns = `repeat(${state.slots.length}, 1fr)`;
   slotsEl.innerHTML = "";
 
-  const degreeNums = state.mode === "TRIAD" ? [1, 3, 5] : [1, 2, 3, 4, 5, 6, 7];
+  const degreeNums = degreeNumbers(state.mode, state.type);
   const degreesEl = $("degrees");
   degreesEl.style.gridTemplateColumns = `repeat(${state.slots.length}, 1fr)`;
   degreesEl.innerHTML = degreeNums.map((n) => `<span>${n}</span>`).join("");
@@ -840,8 +972,24 @@ function helpOpen() { return isOpen("helpOverlay"); }
 function toggleHelp() { helpOpen() ? closeOverlay("helpOverlay") : openOverlay("helpOverlay"); }
 function theoryOpen() { return isOpen("theoryOverlay"); }
 function toggleTheory() { theoryOpen() ? closeOverlay("theoryOverlay") : openOverlay("theoryOverlay"); }
+function modeOpen() { return isOpen("modeOverlay"); }
+
+function handleModalKey(key) {
+  switch (key) {
+    case "escape": closeOverlay("modeOverlay"); break;
+    case "enter": applyModalRow(); break;
+    case "s": selectMode("SCALE"); break;
+    case "t": selectMode("TRIAD"); break;
+    case "p": selectMode("PENTATONIC"); break;
+    case "arrowdown": moveModalRow(1); break;
+    case "arrowup": moveModalRow(-1); break;
+    case "arrowleft": cycleQuality(-1); break;
+    case "arrowright": cycleQuality(1); break;
+  }
+}
 
 function handleKey(key) {
+  if (modeOpen()) { handleModalKey(key); return; }
   if (helpOpen()) {
     if (key === "?" || key === "escape") toggleHelp();
     return;
@@ -855,7 +1003,7 @@ function handleKey(key) {
   if (key === "z") { toggleZen(); return; }
   if (key === "t") { cycleTheme(); return; }
   if (key === "n") { newRound(); return; }
-  if (key === "m") { toggleMode(); return; }
+  if (key === "m") { openModeModal(); return; }
   if (state.submitted) {
     if (key === "enter") newRound();
     return;
@@ -871,7 +1019,7 @@ function handleKey(key) {
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   const key = e.key.toLowerCase();
-  if (["backspace", "arrowleft", "arrowright", "enter", " "].includes(key)) e.preventDefault();
+  if (["backspace", "arrowleft", "arrowright", "arrowup", "arrowdown", "enter", " "].includes(key)) e.preventDefault();
   handleKey(key);
 });
 
@@ -881,6 +1029,10 @@ $("helpOverlay").addEventListener("click", (e) => {
 
 $("theoryOverlay").addEventListener("click", (e) => {
   if (e.target === e.currentTarget) toggleTheory();
+});
+
+$("modeOverlay").addEventListener("click", (e) => {
+  if (e.target === e.currentTarget) closeOverlay("modeOverlay");
 });
 
 renderModeStatus();

@@ -4,12 +4,18 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"scalys/internal/theory"
 )
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	keyMsg, ok := msg.(tea.KeyMsg)
 	if !ok {
 		return m, nil
+	}
+
+	if m.modal {
+		return m.updateModal(keyMsg)
 	}
 
 	switch keyMsg.String() {
@@ -19,7 +25,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.newRound()
 		return m, nil
 	case "m":
-		m.toggleMode()
+		m.openModal()
 		return m, nil
 	}
 
@@ -54,6 +60,36 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.filled() {
 			m.submit()
 		}
+	}
+	return m, nil
+}
+
+// updateModal handles keys while the mode-settings modal is open. s/t/p
+// select and enter a mode immediately (closing the modal); up/down just
+// move the highlight and require enter to confirm; left/right change the
+// quality setting for future rounds without closing.
+func (m model) updateModal(keyMsg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch keyMsg.String() {
+	case "q", "ctrl+c":
+		return m, tea.Quit
+	case "esc":
+		m.modal = false
+	case "enter":
+		m.applyModalRow()
+	case "s":
+		m.selectMode(theory.ScaleMode)
+	case "t":
+		m.selectMode(theory.TriadMode)
+	case "p":
+		m.selectMode(theory.PentatonicMode)
+	case "up":
+		m.moveModalRow(-1)
+	case "down":
+		m.moveModalRow(1)
+	case "left":
+		m.cycleQuality(-1)
+	case "right":
+		m.cycleQuality(1)
 	}
 	return m, nil
 }

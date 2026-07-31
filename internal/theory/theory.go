@@ -57,22 +57,63 @@ type PracticeMode int
 const (
 	ScaleMode PracticeMode = iota
 	TriadMode
+	PentatonicMode
 )
 
 func (p PracticeMode) String() string {
-	if p == TriadMode {
+	switch p {
+	case TriadMode:
 		return "TRIAD"
+	case PentatonicMode:
+		return "PENTATONIC"
+	default:
+		return "SCALE"
 	}
-	return "SCALE"
+}
+
+// DegreeIndices returns the 0-based scale-degree indices a practice mode
+// asks for, or nil for ScaleMode (the full 7-note scale). Pentatonic
+// degrees depend on scaleType: major pentatonic omits 4 and 7 (degrees
+// 1,2,3,5,6), minor pentatonic omits 2 and 6 (degrees 1,3,4,5,7).
+func DegreeIndices(mode PracticeMode, scaleType ScaleType) []int {
+	switch mode {
+	case TriadMode:
+		return []int{0, 2, 4}
+	case PentatonicMode:
+		if scaleType == Major {
+			return []int{0, 1, 2, 4, 5}
+		}
+		return []int{0, 2, 3, 4, 6}
+	default:
+		return nil
+	}
+}
+
+// DegreeNumbers returns the 1-based scale degree numbers for a practice
+// mode, for labeling slots (e.g. 1,3,5 for a triad).
+func DegreeNumbers(mode PracticeMode, scaleType ScaleType) []int {
+	idx := DegreeIndices(mode, scaleType)
+	if idx == nil {
+		return []int{1, 2, 3, 4, 5, 6, 7}
+	}
+	nums := make([]int, len(idx))
+	for i, d := range idx {
+		nums[i] = d + 1
+	}
+	return nums
 }
 
 // Build returns the notes for a round in the given mode: the full 7-note
-// scale, or for TriadMode just the root, third, and fifth (scale degrees
-// 1, 3, 5).
+// scale, or the notes at the mode's degree indices (triad, pentatonic).
 func Build(root int, scaleType ScaleType, mode PracticeMode) []string {
 	scale := BuildScale(root, scaleType)
-	if mode == TriadMode {
-		return []string{scale[0], scale[2], scale[4]}
+	idx := DegreeIndices(mode, scaleType)
+	if idx == nil {
+		return scale
 	}
-	return scale
+	notes := make([]string, len(idx))
+	for i, d := range idx {
+		notes[i] = scale[d]
+	}
+	return notes
 }
