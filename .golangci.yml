@@ -1,0 +1,55 @@
+# golangci-lint configuration (schema v2).
+#
+#   make fmt    -> rewrites files with the formatters below
+#   make lint   -> runs the linters below
+#
+# Docs: https://golangci-lint.run/docs/configuration/file/
+version: "2"
+
+linters:
+  # "standard" is golangci-lint's own default set: errcheck, govet,
+  # ineffassign, staticcheck, unused. Low noise, high signal.
+  default: standard
+
+  # Uncomment any of these to tighten things up later. `exhaustive` is the
+  # interesting one for this codebase: it flags a switch over an iota-based
+  # type (gameState, quality, ScaleType, PracticeMode) that misses a case.
+  enable: []
+  #  - exhaustive
+  #  - misspell
+  #  - revive
+  #  - unconvert
+  #  - gocritic
+
+  settings:
+    staticcheck:
+      # Default checks minus ST1000 (package comments) and ST1003 (initialisms),
+      # which are noisy on a small internal-only module.
+      checks:
+        - all
+        - -ST1000
+        - -ST1003
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+
+formatters:
+  enable:
+    - gofumpt   # stricter superset of gofmt
+    - goimports # groups and sorts imports
+  settings:
+    goimports:
+      local-prefixes:
+        - scalys
+    gofumpt:
+      module-path: scalys
+
+issues:
+  # Report everything, not just the first 3 of each kind.
+  max-issues-per-linter: 0
+  max-same-issues: 0
