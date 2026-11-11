@@ -135,3 +135,7 @@ go test ./...
 - Proper flat spellings (F major → Bb)
 - Practice a specific key via a CLI flag
 - Hide the W/H pattern hint for a harder mode
+
+## License
+
+Released under the MIT License. See [LICENSE](LICENSE) for details.
