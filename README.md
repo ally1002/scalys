@@ -4,8 +4,8 @@ A terminal game for practicing **scales, triads, and pentatonics**, built with
 Go and [Bubble Tea](https://github.com/charmbracelet/bubbletea).
 
 Each round, Scalys picks a random root note and quality (major or natural
-minor). Your job is to fill in the remaining degrees from memory — the full
-scale, the triad, or the pentatonic, depending on the practice mode — and
+minor). Your job is to fill in the remaining degrees from memory (the full
+scale, the triad, or the pentatonic, depending on the practice mode) and
 submit your answer.
 
 ```
@@ -28,15 +28,25 @@ it. `enter` (or `n`) deals the next round.
 
 ## Install & Run
 
-Requires Go 1.22+.
+Requires Go 1.24+.
 
 ```sh
-git clone <repo-url>
+go install github.com/ally1002/scalys@latest
+scalys
+```
+
+This puts the `scalys` binary in `$(go env GOPATH)/bin`, so make sure that
+directory is on your `PATH`.
+
+To run from source instead:
+
+```sh
+git clone https://github.com/ally1002/scalys.git
 cd scalys
 go run .
 ```
 
-Or build a binary:
+Or build a binary from the checkout:
 
 ```sh
 go build -o scalys .
@@ -47,14 +57,14 @@ go build -o scalys .
 
 Press `m` to open the mode-settings modal:
 
-- **Scale** — all 7 degrees. Slot 1 is pre-filled with the root; the W/H
+- **Scale**: all 7 degrees. Slot 1 is pre-filled with the root; the W/H
   pattern hint is shown.
-- **Triad** — degrees 1, 3, 5. No pattern hint.
-- **Pentatonic** — major omits degrees 4 and 7 (1 2 3 5 6); minor omits 2
+- **Triad**: degrees 1, 3, 5. No pattern hint.
+- **Pentatonic**: major omits degrees 4 and 7 (1 2 3 5 6); minor omits 2
   and 6 (1 3 4 5 7). No pattern hint.
 
-The modal also has a **quality** setting — `Random` (default), `Major`, or
-`Minor` — controlling which scale type future rounds deal.
+The modal also has a **quality** setting that controls which scale type
+future rounds deal: `Random` (the default), `Major`, or `Minor`.
 
 Inside the modal: `s`/`t`/`p` pick a mode and start a round immediately,
 `↑`/`↓` + `enter` browse and confirm, `←`/`→` cycle the quality, `esc`
@@ -65,7 +75,7 @@ closes.
 | Key | Action |
 |---|---|
 | `a`–`g` | write a natural note into the focused slot |
-| `#` | sharpen the note (and advance) — press again to remove |
+| `#` | sharpen the note (and advance); press again to remove |
 | `enter` / `→` | move to the next slot |
 | `←` | move to the previous slot |
 | `backspace` | clear the slot (or step back and clear) |
@@ -74,7 +84,7 @@ closes.
 | `n` | new round (`enter` also works after submitting) |
 | `q` / `ctrl+c` | quit |
 
-Notes are entered by typing on purpose — there is no note picker to cycle
+Notes are entered by typing on purpose. There is no note picker to cycle
 through, so you can't count your way to the answer. You have to know the scale.
 
 ## Notes on the music theory
@@ -89,16 +99,16 @@ through, so you can't count your way to the answer. You have to know the scale.
 
 ## Web version
 
-A standalone browser version lives in [`docs/index.html`](docs/index.html) —
+A standalone browser version lives in [`docs/index.html`](docs/index.html):
 one self-contained file (no build step, no dependencies) with the same rules,
 practice modes, and keyboard-only input. On top of the TUI it adds:
 
 - a **best-streak** record (persisted in `localStorage`)
-- `?` — help overlay listing all commands
-- `h` — music theory overlay
-- `m` — mode-settings modal (same as the TUI)
-- `z` — zen mode (disables the CRT flicker/blink effects)
-- `t` — cycle theme: system → light → dark (persisted)
+- `?` opens a help overlay listing all commands
+- `h` opens the music theory overlay
+- `m` opens the mode-settings modal (same as the TUI)
+- `z` toggles zen mode, which disables the CRT flicker/blink effects
+- `t` cycles the theme: system → light → dark (persisted)
 
 To share it: send the file directly, open it locally, or enable **GitHub
 Pages** on this repo (Settings → Pages → deploy from branch `master`, folder
@@ -125,3 +135,7 @@ go test ./...
 - Proper flat spellings (F major → Bb)
 - Practice a specific key via a CLI flag
 - Hide the W/H pattern hint for a harder mode
+
+## License
+
+Released under the MIT License. See [LICENSE](LICENSE) for details.

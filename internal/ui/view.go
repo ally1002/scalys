@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"scalys/internal/theory"
+	"github.com/ally1002/scalys/internal/theory"
 )
 
 func (m model) View() string {

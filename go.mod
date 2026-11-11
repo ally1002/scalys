@@ -1,4 +1,4 @@
-module scalys
+module github.com/ally1002/scalys
 
 go 1.24.0
 

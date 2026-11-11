@@ -6,7 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"scalys/internal/theory"
+	"github.com/ally1002/scalys/internal/theory"
 )
 
 func press(m model, keys ...string) model {
