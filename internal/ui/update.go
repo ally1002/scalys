@@ -5,7 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"scalys/internal/theory"
+	"github.com/ally1002/scalys/internal/theory"
 )
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

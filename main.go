@@ -6,7 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"scalys/internal/ui"
+	"github.com/ally1002/scalys/internal/ui"
 )
 
 func main() {

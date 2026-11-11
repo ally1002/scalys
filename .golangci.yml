@@ -45,9 +45,9 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - scalys
+        - github.com/ally1002/scalys
     gofumpt:
-      module-path: scalys
+      module-path: github.com/ally1002/scalys
 
 issues:
   # Report everything, not just the first 3 of each kind.
